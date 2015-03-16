@@ -1,41 +1,47 @@
 var React = require('react');
 var R = require('ramda');
-
-function merge(a, b){
-    return React.addons.update(a, {$merge: b});
-}
+var Parameter = require('./Parameter.jsx');
+var CalcList = require('./CalcList.jsx');
+var calculations = require('./calculations.jsx');
 
 var Section = React.createClass({
     getInitialState: function() {
         return { editing: false };
     },
-    handleInputChange: function(event) {
-        this.props.onChange(this.props.id, event.target.value);
+    handleInputChange: function(key, value) {
+        var obj = {};
+        obj[key] = value;
+        this.props.passUpProps(this.props.id, obj);
     },
     toggleEdit: function(event) {
         event.preventDefault();
         this.setState({editing: !this.state.editing});
     },
     render: function() {
-
+        var self = this;
         return this.state.editing ? (
-
-            <div className="form-group">
-                <label className="col-md-4" >{this.props.id}</label>
-                <div className="col-md-8">
-                <input className="form-control" type="text"
-                    onChange={newKeyChange}
-                    value={this.state.buffer.key} />
-                </div>
-                <button className="btn btn-success" type="button" onClick={this.toggleEdit}>Stop Editing</button>
+            <div className="col-md-12">
+                <form className="form-vertical col-md-6">
+                    <h3><a href="#" onClick={this.toggleEdit}>{this.props.id}</a></h3>
+                    {R.mapObjIndexed(function(parameter, key) {
+                        if (parameter && key != "__proto__")
+                            return <Parameter key={key} id={key} value={parameter} onChange={self.handleInputChange}/>;
+                    }, this.props.data)}
+                </form>
+                <CalcList data={this.props.data} mower={this.props.mower} />
             </div>
         ) : (
-            <div className="parameter">
-                <input className="form-control" type="hidden" value={this.props.value} />
-                <div className="col-md-4"> <b>{this.props.id}</b> </div>
-                <div className="col-md-8" > {this.props.value} </div>
-                <button className="btn btn-sm btn-success" type="button" onClick={this.toggleEdit}>Edit</button>
-            </div>
+            <ul className="list-inline row">
+                <li className="col-md-1">
+                    <b className="col-md-3"><a href="#" onClick={this.toggleEdit}>{this.props.id}</a></b>
+                </li>
+                {R.map(function(parameter) {
+                    return <li className="col-md-1 parameter">{self.props.data[parameter]}</li>;
+                }, ['width', 'height', 'stripeDirection'])}
+                {R.map(function(calc) {
+                    return <li className="col-md-1 calculation">{calculations[calc](self.props.data, self.props.mower)}</li>;
+                }, ['space', 'totalStripeTime', 'price'])}
+            </ul>
         );
     }
 });

@@ -1,11 +1,7 @@
 var React = require('react');
 var R = require('ramda');
 
-function merge(a, b){
-    return React.addons.update(a, {$merge: b});
-}
-
-var Paremeter = React.createClass({
+var Parameter = React.createClass({
     getInitialState: function() {
         return { editing: false };
     },
@@ -17,22 +13,18 @@ var Paremeter = React.createClass({
         this.setState({editing: !this.state.editing});
     },
     render: function() {
-        return this.state.editing ? (
-            <div className="parameter form-group">
-                <label className="col-md-4" >{this.props.id}</label>
-                <div className="col-md-8">
-                <input className="form-control" type="text"
-                    onChange={newKeyChange}
-                    value={this.state.buffer.key} />
+        return (
+            <div className="row">
+                <a className="col-md-4" href={"#editing-" + this.props.id} onClick={this.toggleEdit}>
+                    <b>{this.props.id}</b>
+                </a>
+                <div className="col-md-8" > 
+                    { this.state.editing ? 
+                        <input className="form-control" type="text"
+                            onChange={this.handleInputChange}
+                            value={this.props.value} />
+                        : this.props.value }
                 </div>
-                <button className="btn btn-success" type="button" onClick={this.toggleEdit}>Stop Editing</button>
-            </div>
-        ) : (
-            <div className="parameter">
-                <input className="form-control" type="hidden" value={this.props.value} />
-                <div className="col-md-4"> <b>{this.props.id}</b> </div>
-                <div className="col-md-8" > {this.props.value} </div>
-                <button className="btn btn-sm btn-success" type="button" onClick={this.toggleEdit}>Edit</button>
             </div>
         );
     }

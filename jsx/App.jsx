@@ -1,4 +1,4 @@
-var React = require('react');
+var React = require('react/addons');
 var Firebase = require('firebase');
 var ReactFireMixin = require('reactfire');
 var R = require('ramda');
@@ -23,7 +23,7 @@ var App = React.createClass({
     mixins: [ReactFireMixin],
 
     getInitialState: function() {
-        return { };
+        return { home: undefined };
     },
 
     componentWillMount: function() { 
@@ -36,10 +36,8 @@ var App = React.createClass({
         this.bindAsObject(firebaseRef.child('configs/mowers/gas'), 'config');
     },
 
-    editState: function(key, state) {
-        this.firebaseRefs.fixtures.child(key).update(
-            React.addons.update(this.state.fixtures[key], {$merge: state})
-        );
+    editState: function(key, obj) {
+        this.firebaseRefs.homes.child('demo/lawns/' + key).update( obj );
     },
 
     pushObject: function(table, data) {
@@ -51,34 +49,36 @@ var App = React.createClass({
 
     handleEditing: function(i) { this.setState({editing: i}); },
 
-    handleFormEdit: function(i, fixture) {
-        if(fixture.remove)
-            return this.removeFixture(i);
-        if (fixture.clone){
-            delete fixture.clone;
-            this.addFixture(fixture);
-        }
-        return i ? this.editState(i, fixture) : this.addFixture(fixture);
-    },
-
-    handleGardenEdit: function(gardenState) {
-        this.firebaseRefs.garden.update(
-            React.addons.update(this.state.garden, {$merge: gardenState})
-        );
-    },
-
     render: function() {
         var self = this;
-        return (
-            <div className="container">
-                <div className="row">
-                    <div className="app col-md-12">
-                        Hello World
-                    </div>
-                </div>
+        var home = this.state.home;
+        return home ? (
+            <div className="well container">
+                <h1>Service Calculator for {this.state.home.name}</h1>
+                <h2>Simple Lawns to Mow</h2>
+                <ul className="list-inline row">
+                    {R.map(function(header) {
+                        return <li className="col-md-1"><b>{header}</b></li>;
+                    }, ["Name", "Height", "Width", "Stripe Direction"])}
+                    {R.map(function(header) {
+                        return <li className="col-md-1"><b>{header}</b></li>;
+                    }, ["Calculated:", "Stripe Time", "Price"])}
+                </ul>
+                {R.mapObjIndexed(function(lawn, key) {
+                    console.log(lawn);
+                    if (lawn && key != "__proto__")
+                        return (
+                            <Section
+                                id={key} key={key}
+                                type="lawn"
+                                data={lawn}
+                                declareEditing={self.handleEditing}
+                                passUpProps={self.editState} />
+                        );
+                }, this.state.home.lawns)}
             </div>
-        );
+        ) : <div/>;
     }
 });
 
-React.render(<App url="fixtures.json" />, document.getElementById('app'));
+React.render(<App/>, document.getElementById('app'));
