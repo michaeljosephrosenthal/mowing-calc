@@ -22,10 +22,9 @@ var Section = React.createClass({
         return this.state.editing ? (
             <div className="col-md-12">
                 <form className="form-vertical col-md-6">
-                    <h3><a href="#" onClick={this.toggleEdit}>{this.props.id}</a></h3>
+                    <h3><a href="#" onClick={this.toggleEdit}>{this.props.data.name}</a></h3>
                     {R.mapObjIndexed(function(parameter, key) {
-                        if (parameter && key != "__proto__")
-                            return <Parameter key={key} id={key} value={parameter} onChange={self.handleInputChange}/>;
+                        return <Parameter key={key} id={key} value={parameter} onChange={self.handleInputChange}/>;
                     }, this.props.data)}
                 </form>
                 <CalcList data={this.props.data} mower={this.props.mower} />
@@ -33,7 +32,7 @@ var Section = React.createClass({
         ) : (
             <ul className="list-inline row">
                 <li className="col-md-1">
-                    <b className="col-md-3"><a href="#" onClick={this.toggleEdit}>{this.props.id}</a></b>
+                    <b className="col-md-3"><a href="#" onClick={this.toggleEdit}>{this.props.data.name}</a></b>
                 </li>
                 {R.map(function(parameter) {
                     return <li className="col-md-1 parameter">{self.props.data[parameter]}</li>;

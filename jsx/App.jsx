@@ -3,21 +3,20 @@ var Firebase = require('firebase');
 var ReactFireMixin = require('reactfire');
 var R = require('ramda');
 var $ = require('jquery');
+
+var u = require('./util.jsx');
 var Section = require('./Section.jsx');
 
 window.React = React;
 window.R = R;
 
-function merge(a, b){
-    return React.addons.update(a, {'$merge': b});
+defaults = {
+    name: "New Lawn",
+    width: 0,
+    height: 0,
+    stripeDirection: "V"
 }
 
-function justOwnData(obj){
-    return R.pickBy(
-        function(value, key){return typeof(value) != "function" && key != "__proto__";},
-        obj
-    );
-}
 
 var App = React.createClass({
     mixins: [ReactFireMixin],
@@ -49,6 +48,16 @@ var App = React.createClass({
 
     handleEditing: function(i) { this.setState({editing: i}); },
 
+    addLawn: function(e) {
+        e.preventDefault();
+        this.firebaseRefs.home.child('lawns').push({
+            name: "New Lawn",
+            width: 0,
+            height: 0,
+            stripeDirection: "V"
+        });
+    },
+
     render: function() {
         var self = this;
         var home = this.state.home;
@@ -65,17 +74,18 @@ var App = React.createClass({
                     }, ["Calculated:", "Stripe Time", "Price"])}
                 </ul>
                 {R.mapObjIndexed(function(lawn, key) {
-                    console.log(lawn);
                     if (lawn && key != "__proto__")
                         return (
-                            <Section
-                                id={key} key={key}
+                            <Section id={key} key={key}
                                 type="lawn"
-                                data={lawn}
+                                data={u.nullIfEmtpyMerge(defaults, lawn)}
                                 declareEditing={self.handleEditing}
                                 passUpProps={self.editState} />
                         );
                 }, this.state.home.lawns)}
+                <div className="row">
+                    <a className="col-md-1" href="#add" onClick={this.addLawn}>+</a>
+                </div>
             </div>
         ) : <div/>;
     }
