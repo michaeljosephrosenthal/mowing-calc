@@ -16,7 +16,7 @@ var defaults = {
     height: 0,
     stripeDirection: "V",
     perimeterIncluded: true,
-    visitsPerYear: 1
+    visitsPerYear: 44
 };
 var varHeaders = ["Name", "Height", "Width", "Stripe Direction", "Perimeter Included"];
 var calcHeaders = ["Calculated:", "Stripe Time", "Price of Mowing", "Annual Price of Mowing"];
