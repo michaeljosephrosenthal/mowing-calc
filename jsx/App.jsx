@@ -10,13 +10,16 @@ var Section = require('./Section.jsx');
 window.React = React;
 window.R = R;
 
-defaults = {
+var defaults = {
     name: "New Lawn",
     width: 0,
     height: 0,
-    stripeDirection: "V"
-}
-
+    stripeDirection: "V",
+    perimeterIncluded: true,
+    visitsPerYear: 1
+};
+var varHeaders = ["Name", "Height", "Width", "Stripe Direction", "Perimeter Included"];
+var calcHeaders = ["Calculated:", "Stripe Time", "Price of Mowing", "Annual Price of Mowing"];
 
 var App = React.createClass({
     mixins: [ReactFireMixin],
@@ -57,6 +60,9 @@ var App = React.createClass({
             stripeDirection: "V"
         });
     },
+    removeLawn: function(i) {
+        this.firebaseRefs.home.child('lawns').child(i).remove();
+    },
 
     render: function() {
         var self = this;
@@ -67,11 +73,13 @@ var App = React.createClass({
                 <h2>Simple Lawns to Mow</h2>
                 <ul className="list-inline row">
                     {R.map(function(header) {
-                        return <li className="col-md-1"><b>{header}</b></li>;
-                    }, ["Name", "Height", "Width", "Stripe Direction"])}
+                        leng = header.length > 18 ? 2 : 1;
+                        return <li className={"col-md-" + leng + " header"}><b>{header}</b></li>;
+                    }, varHeaders)}
                     {R.map(function(header) {
-                        return <li className="col-md-1"><b>{header}</b></li>;
-                    }, ["Calculated:", "Stripe Time", "Price"])}
+                        leng = header.length > 18 ? 2 : 1;
+                        return <li className={"col-md-" + leng + " header"}><b>{header}</b></li>;
+                    }, calcHeaders)}
                 </ul>
                 {R.mapObjIndexed(function(lawn, key) {
                     if (lawn && key != "__proto__")
@@ -79,8 +87,11 @@ var App = React.createClass({
                             <Section id={key} key={key}
                                 type="lawn"
                                 data={u.nullIfEmtpyMerge(defaults, lawn)}
+                                vars={R.map(u.camelize, varHeaders)}
+                                topCalculations={calcHeaders}
                                 declareEditing={self.handleEditing}
-                                passUpProps={self.editState} />
+                                passUpProps={self.editState} 
+                                removeLawn={self.removeLawn} />
                         );
                 }, this.state.home.lawns)}
                 <div className="row">

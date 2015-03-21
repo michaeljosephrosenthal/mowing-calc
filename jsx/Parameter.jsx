@@ -1,5 +1,6 @@
 var React = require('react');
 var R = require('ramda');
+var u = require('./util.jsx');
 
 var Parameter = React.createClass({
     getInitialState: function() {
@@ -15,15 +16,15 @@ var Parameter = React.createClass({
     render: function() {
         return (
             <div className="row">
-                <a className="col-md-4" href={"#editing-" + this.props.id} onClick={this.toggleEdit}>
+                <a className="col-md-6" href={"#editing-" + this.props.id} onClick={this.toggleEdit}>
                     <b>{this.props.id}</b>
                 </a>
-                <div className="col-md-8" > 
+                <div className="col-md-6" > 
                     { this.state.editing ? 
                         <input className="form-control" type="text"
                             onChange={this.handleInputChange}
-                            value={this.props.value} />
-                        : this.props.value }
+                            value={this.props.value.toString()} />
+                        : u.pretty(this.props.id, this.props.value) }
                 </div>
             </div>
         );
