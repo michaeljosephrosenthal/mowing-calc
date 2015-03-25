@@ -12,6 +12,9 @@ function is(functionName, substrings){
     }
 }
 var util = {
+    add: function(a, b){
+        return parseFloat(a) + parseFloat(b);
+    },
     merge: function(a, b){
         return React.addons.update(a, {$merge: b});
     },
@@ -20,6 +23,15 @@ var util = {
             return val === 0 || val.length < 1 ? a[key] : val;
         }, b);
         return React.addons.update(a, {$merge: patchedEmpties});
+    },
+    childNamesToKeys: function(obj){
+        var nameToKey = function(acc_obj, child_key) {
+            var child = obj[child_key];
+            acc_obj[child.name] = obj[child_key];
+            acc_obj[child.name].key = child_key;
+            return acc_obj;
+        };
+        return R.reduce(nameToKey, {}, R.keys(obj));
     },
     justOwnData: function(obj){
         return R.pickBy(
@@ -44,9 +56,18 @@ var util = {
             return value.toFixed(2) + " ft / min";
         } else if ( is( functionName, ["width", "height", "Length"])) {
             return value + " ft";
-        } else {
+        } else if ( is( functionName, ["priceOf", "annualPriceOf"])) {
+            return "$" + value.toFixed(2);
+        } else if ( is( functionName, ["calculated"])) {
+            return "";
+        } else if (value !== undefined) {
             return value.toString();
-        }
+        } else { return ""; }
+    },
+    getConfig: function(configs, configDefaults, config_key, obj){
+        return configs && config_key ?
+            this.nullIfEmtpyMerge(configDefaults, configs[obj[config_key]]) :
+            undefined;
     }
 
 };

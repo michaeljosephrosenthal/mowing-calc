@@ -43,7 +43,7 @@ var calculations = {
     },
 
     pushSpeed: function(data, mower){
-        return (mower && mower.pushSpeed ? mower.pushSpeed : 3.1);
+        return (mower && mower.pushSpeed ? parseFloat(mower.pushSpeed) : 3.1);
     },
 
     pushSpeedInFtPerMin: function(data, mower){
@@ -51,7 +51,7 @@ var calculations = {
     },
 
     turnDelay: function(data, mower){
-        return (mower && mower.turnDelay ? mower.turnDelay : 3);
+        return (mower && mower.turnDelay ? parseFloat(mower.turnDelay) : 3);
     },
 
     turnDelayInSec: function(data, mower){
@@ -59,7 +59,7 @@ var calculations = {
     },
 
     sideLength: function(data, mower){
-        var length = this.diameterOne(data) - (mower && mower.length ? mower.length : 2);
+        var length = this.diameterOne(data) - (mower && mower.length ? parseFloat(mower.length) : 2);
         return  length > 0 ? length : 0;
     },
 
@@ -73,7 +73,7 @@ var calculations = {
 
     stripeCount: function(data, mower){
         return Math.ceil(this.diameterTwo(data, mower) /
-                         (mower && mower.width ? (mower.width / 12.0) : (21 / 12.0)));
+                         (mower && mower.width ? (parseFloat(mower.width) / 12.0) : (21 / 12.0)));
     },
 
     totalStripeTime: function(data, mower){
@@ -87,7 +87,8 @@ var calculations = {
     },
 
     perimeterMinusCorners: function(data, mower){
-        return this.perimeter(data, mower) - (4 * (mower && mower.length ? mower.length : 2));
+        return this.perimeter(data, mower) - 
+            (4 * (mower && mower.length ? parseFloat(mower.length) : 2));
     },
 
     totalPerimeterTime: function(data, mower){
@@ -99,15 +100,15 @@ var calculations = {
     },
 
     totalWeedTime: function(data, mower){
-        var weedOccurance = data.weedOccurance ? data.weedOccurance : 1;
+        var weedOccurance = data.weedOccurance ? parseFloat(data.weedOccurance) : 1;
         var weedCount = this.area(data) / (1000 * weedOccurance);
-        var weedDelay = data.weedDelay ? data.weedDelay : 0.5;
+        var weedDelay = data.weedDelay ? parseFloat(data.weedDelay) : 0.5;
         return this.round(weedCount * weedDelay);
     },
 
     totalBagTime: function(data, mower){
-        var grassAreaPerBag = data.grassAreaPerBag ? data.grassAreaPerBag : 1000;
-        var bagTime = data.bagTime ? data.bagTime : 0.5;
+        var grassAreaPerBag = data.grassAreaPerBag ? parseFloat(data.grassAreaPerBag) : 1000;
+        var bagTime = data.bagTime ? parseFloat(data.bagTime) : 0.5;
         var bags = this.area(data) / grassAreaPerBag;
         bags = bags > 1 ? this.round(bags, 1) : 1;
         return this.round(bags * bagTime);
@@ -132,18 +133,22 @@ calculations = R.merge(calculations, {
     mowing: calculations.totalMowingTime,
     calculated: calculations.space
 });
-function prettyFuncOf(func, functionName, data, mower){
-    return "$" + calculations[func](functionName, data, mower).toFixed(2);
+function prettyFuncOf(func, functionName, data, mower, rawValuep){
+    var result = calculations[func](functionName, data, mower);
+    return rawValuep ? result : "$" + result.toFixed(2);
 }
-var calculate = function(functionName, data, mower){
+var calculate = function(functionName, data, mower, rawValuep){
     functionName = u.camelize(functionName);
     var funcToPrice = u.lowerFirst(functionName.split("priceOf")[1]);
     var funcToPriceAnnual = u.lowerFirst(functionName.split("annualPriceOf")[1]);
     if (calculations[funcToPrice] !== undefined && calculations[functionName] === undefined){
-        return prettyFuncOf("priceOf", funcToPrice, data, mower);
+        return prettyFuncOf("priceOf", funcToPrice, data, mower, rawValuep);
 
     } else if (calculations[funcToPriceAnnual] !== undefined && calculations[functionName] === undefined){
-        return prettyFuncOf("annualPriceOf", funcToPriceAnnual, data, mower);
+        return prettyFuncOf("annualPriceOf", funcToPriceAnnual, data, mower, rawValuep);
+
+    } else if (calculations[functionName] !== undefined && rawValuep) {
+        return calculations[functionName](data, mower);
 
     } else if (calculations[functionName] !== undefined) {
         return u.pretty(functionName, calculations[functionName](data, mower));

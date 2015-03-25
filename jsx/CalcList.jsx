@@ -42,7 +42,7 @@ var CalcList = React.createClass({
                         {R.map(function(calc) {
                             return <span className="drow">
                                 <dt className="col-md-6">{calc}:</dt>
-                                <dd className="col-md-6">{calculate(calc, self.props.data, self.props.mower)}</dd>
+                                <dd className="col-md-6">{calculate(calc, self.props.data, self.props.config)}</dd>
                             </span>;
                         }, list)}
                     </dl> : <span/> }

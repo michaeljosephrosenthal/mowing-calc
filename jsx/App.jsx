@@ -5,41 +5,71 @@ var R = require('ramda');
 var $ = require('jquery');
 
 var u = require('./util.jsx');
-var Section = require('./Section.jsx');
+var Well = require('./Well.jsx');
 
 window.React = React;
 window.R = R;
-
-var defaults = {
-    name: "New Lawn",
-    width: 0,
-    height: 0,
-    stripeDirection: "V",
-    perimeterIncluded: true,
-    visitsPerYear: 44
-};
-var varHeaders = ["Name", "Height", "Width", "Stripe Direction", "Perimeter Included"];
-var calcHeaders = ["Calculated:", "Stripe Time", "Price of Mowing", "Annual Price of Mowing"];
 
 var App = React.createClass({
     mixins: [ReactFireMixin],
 
     getInitialState: function() {
-        return { home: undefined };
+        return { 
+            home: undefined,
+            configs: {},
+            defaults: {
+                lawns: {
+                    name: "New Lawn",
+                    mower: "gas",
+                    width: 0,
+                    height: 0,
+                    stripeDirection: "V",
+                    perimeterIncluded: true,
+                    visitsPerYear: 44
+                },
+                mowers: {
+                    name: "New Mower",
+                    width: 19,
+                    length: 2,
+                    pushSpeed: 3.1,
+                    ninetyDegTurnDelay: 3,
+                    weeksPerYear: 44,
+                    grassPerBag: 1000,
+                    grassEmptyTime: 0.5,
+                    unloading: 1.0,
+                    reloading: 1.0,
+                    carryDistance: 50
+                }
+            },
+            views: {
+                lawn: {
+                    varHeaders: ["Name", "Height", "Width", "Stripe Direction", "Perimeter Included"],
+                    calcHeaders: ["Calculated:", "Total Mowing Time", "Price of Mowing", "Annual Price of Mowing"]
+                },
+                mower: {
+                    varHeaders: [
+                        "Name", "Width", "Length", "Push Speed", "Ninety Deg Turn Delay", "Weeks Per Year", "Grass Per Bag",
+                        "Grass Empty Time", "Unloading", "Reloading", "Carry Distance"
+                    ]
+                }
+            }
+        };
     },
 
     componentWillMount: function() { 
-        var firebaseRef = new Firebase("https://service-calc.firebaseio.com/");
+        var firebaseRef = new Firebase('https://service-calc.firebaseio.com/');
         var homesRef = firebaseRef.child('homes');
-        this.bindAsObject(firebaseRef.child('configs'), "configs");
+        this.bindAsObject(firebaseRef.child('configs'), 'configs');
         this.bindAsObject(homesRef, 'homes');
 
         this.bindAsObject(homesRef.child('demo'), 'home');
-        this.bindAsObject(firebaseRef.child('configs/mowers/gas'), 'config');
     },
 
-    editState: function(key, obj) {
+    editLawnState: function(key, obj) {
         this.firebaseRefs.homes.child('demo/lawns/' + key).update( obj );
+    },
+    editMowerState: function(key, obj) {
+        this.firebaseRefs.configs.child('mowers/' + key).update( obj );
     },
 
     pushObject: function(table, data) {
@@ -49,54 +79,57 @@ var App = React.createClass({
         this.firebaseRefs[table].child(i).remove();
     },
 
-    handleEditing: function(i) { this.setState({editing: i}); },
+
+    add: function(section, type) {
+        this.firebaseRefs[section].child(type).push(this.state.defaults[type]);
+    },
+    remove: function(section, type, i) {
+        this.firebaseRefs[section].child(type).child(i).remove();
+    },
 
     addLawn: function(e) {
         e.preventDefault();
-        this.firebaseRefs.home.child('lawns').push({
-            name: "New Lawn",
-            width: 0,
-            height: 0,
-            stripeDirection: "V"
-        });
+        this.add('home', 'lawns');
+    },
+    addMower: function(e) {
+        e.preventDefault();
+        this.add('configs', 'mowers');
     },
     removeLawn: function(i) {
-        this.firebaseRefs.home.child('lawns').child(i).remove();
+        this.remove('home', 'lawns', i);
+    },
+    removeMower: function(i) {
+        this.remove('configs', 'mowers', i);
     },
 
     render: function() {
         var self = this;
         var home = this.state.home;
+        var mowers = this.state.configs.mowers;
         return home ? (
-            <div className="well container">
+            <div className="container">
                 <h1>Service Calculator for {this.state.home.name}</h1>
-                <h2>Simple Lawns to Mow</h2>
-                <ul className="list-inline row">
-                    {R.map(function(header) {
-                        leng = header.length > 18 ? 2 : 1;
-                        return <li className={"col-md-" + leng + " header"}><b>{header}</b></li>;
-                    }, varHeaders)}
-                    {R.map(function(header) {
-                        leng = header.length > 18 ? 2 : 1;
-                        return <li className={"col-md-" + leng + " header"}><b>{header}</b></li>;
-                    }, calcHeaders)}
-                </ul>
-                {R.mapObjIndexed(function(lawn, key) {
-                    if (lawn && key != "__proto__")
-                        return (
-                            <Section id={key} key={key}
-                                type="lawn"
-                                data={u.nullIfEmtpyMerge(defaults, lawn)}
-                                vars={R.map(u.camelize, varHeaders)}
-                                topCalculations={calcHeaders}
-                                declareEditing={self.handleEditing}
-                                passUpProps={self.editState} 
-                                removeLawn={self.removeLawn} />
-                        );
-                }, this.state.home.lawns)}
-                <div className="row">
-                    <a className="col-md-1" href="#add" onClick={this.addLawn}>+</a>
-                </div>
+                <Well key="lawns" type="lawn" title="Simple Lawns to Mow"
+                    sections={this.state.home.lawns}
+                    configs={u.childNamesToKeys(this.state.configs.mowers)}
+                    defaults={this.state.defaults.lawns}
+                    configDefaults={this.state.defaults.mowers}
+
+                    addFunc={self.addLawn} removeFunc={self.removeLawn} 
+                    
+                    calcHeaders={this.state.views.lawn.calcHeaders}
+                    varHeaders={this.state.views.lawn.varHeaders}
+                    passUpProps={self.editLawnState} />
+
+                <Well key="configs" type="mower" title="Mower Configurations"
+                    sections={this.state.configs.mowers}
+                    defaults={this.state.defaults.mowers}
+
+                    removeFunc={self.removeMower} addFunc={self.addMower}
+
+                    calcHeaders={[]}
+                    varHeaders={this.state.views.mower.varHeaders}
+                    passUpProps={self.editMowerState} />
             </div>
         ) : <div/>;
     }
